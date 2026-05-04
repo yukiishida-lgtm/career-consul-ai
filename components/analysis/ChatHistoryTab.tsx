@@ -59,7 +59,7 @@ const SEED_SESSIONS: ChatSession[] = [
 
 // ─── セッションをカテゴリ分類 ─────────────────────────────
 function categorize(sessions: ChatSession[]): Record<CategoryId, ChatSession[]> {
-  const result = Object.fromEntries(CATEGORIES.map((c) => [c.id, []])) as Record<CategoryId, ChatSession[]>;
+  const result = Object.fromEntries(CATEGORIES.map((c) => [c.id, [] as ChatSession[]])) as Record<CategoryId, ChatSession[]>;
 
   for (const session of sessions) {
     const text = session.messages.map((m) => m.content).join(' ') + ' ' + session.name;
