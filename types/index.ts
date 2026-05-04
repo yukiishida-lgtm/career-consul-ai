@@ -287,7 +287,7 @@ export interface Episode {
   category?: EpisodeCategory;
   age?: number;
   title: string;
-  motivationScore: number; // -100 to 100
+  motivationScore: number | null; // -100 to 100、null = 未入力
   isDeepDived: boolean;
   aiConclusion?: string;
   aiDetail?: string;
@@ -304,7 +304,7 @@ export interface ActiveEpisodeForDeepDive {
   period: EpisodePeriod;
   age?: number;
   title: string;
-  motivationScore: number;
+  motivationScore: number | null;
   chatSessionId: string;
 }
 

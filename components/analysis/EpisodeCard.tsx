@@ -14,7 +14,10 @@ const PERIOD_COLORS: Record<string, string> = {
   '社会人': 'bg-emerald-50 text-emerald-600',
 };
 
-function ScoreBar({ score }: { score: number }) {
+function ScoreBar({ score }: { score: number | null }) {
+  if (score === null) {
+    return <p className="text-xs text-slate-300">モチベーション未入力</p>;
+  }
   const pct = Math.abs(score) / 2;
   const color = score > 0 ? 'bg-blue-500' : 'bg-red-400';
   return (

@@ -34,35 +34,51 @@ const DISPLAY_COLS: {
 
 // ── Motivation score buttons ──────────────────────────────────────
 
-const SCORE_VALUES = [-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100];
+const NEG_VALS = [-20, -40, -60, -80, -100];
+const POS_VALS = [20, 40, 60, 80, 100];
 
-function scoreButtonStyle(val: number, selected: boolean): string {
-  if (selected) {
-    if (val < 0)  return 'bg-red-500 text-white border-red-500';
-    if (val === 0) return 'bg-slate-500 text-white border-slate-500';
-    return 'bg-blue-500 text-white border-blue-500';
-  }
-  if (val < 0)  return 'bg-white text-red-400 border-red-200 hover:bg-red-50';
-  if (val === 0) return 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50';
-  return 'bg-white text-blue-400 border-blue-200 hover:bg-blue-50';
-}
+function MotivationButtons({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  const btn = (v: number, label: string) => {
+    const isSelected = value === v;
+    const colorClass = v < 0
+      ? (isSelected ? 'bg-red-500 text-white border-red-500' : 'bg-white text-red-400 border-red-200 hover:bg-red-50')
+      : (isSelected ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-blue-400 border-blue-200 hover:bg-blue-50');
+    return (
+      <button
+        key={v}
+        type="button"
+        onClick={() => onChange(isSelected ? null : v)}
+        className={cn('text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors min-w-[34px] text-center', colorClass)}
+      >
+        {label}
+      </button>
+    );
+  };
 
-function MotivationButtons({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const zeroSelected = value === 0;
+
   return (
-    <div className="flex flex-wrap gap-1">
-      {SCORE_VALUES.map(v => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          className={cn(
-            'text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors min-w-[36px] text-center',
-            scoreButtonStyle(v, value === v)
-          )}
-        >
-          {v > 0 ? `+${v}` : v}
-        </button>
-      ))}
+    <div className="flex items-start gap-1.5">
+      {/* 0ボタン（左端、2行分の高さ） */}
+      <button
+        type="button"
+        onClick={() => onChange(zeroSelected ? null : 0)}
+        className={cn(
+          'text-[10px] font-bold px-2 rounded-lg border transition-colors min-w-[34px] text-center self-stretch flex items-center justify-center',
+          zeroSelected ? 'bg-slate-500 text-white border-slate-500' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+        )}
+      >
+        0
+      </button>
+      {/* 2行：上がマイナス、下がプラス */}
+      <div className="flex flex-col gap-1">
+        <div className="flex gap-1">
+          {NEG_VALS.map(v => btn(v, String(v)))}
+        </div>
+        <div className="flex gap-1">
+          {POS_VALS.map(v => btn(v, `+${v}`))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -82,7 +98,7 @@ function EpisodeModal({
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [score, setScore] = useState(initial?.motivationScore ?? 0);
+  const [score, setScore] = useState<number | null>(initial?.motivationScore ?? null);
   const isEdit = !!initial;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -125,9 +141,11 @@ function EpisodeModal({
 
           <div>
             <label className="text-[10px] font-medium text-slate-500 mb-2 block">
-              モチベーション：
-              <span className={cn('ml-1 font-bold text-sm', score > 0 ? 'text-blue-600' : score < 0 ? 'text-red-500' : 'text-slate-500')}>
-                {score > 0 ? `+${score}` : score}
+              モチベーション（任意）：
+              <span className={cn('ml-1 font-bold text-sm',
+                score === null ? 'text-slate-300' : score > 0 ? 'text-blue-600' : score < 0 ? 'text-red-500' : 'text-slate-500'
+              )}>
+                {score === null ? '未入力' : score > 0 ? `+${score}` : score}
               </span>
             </label>
             <MotivationButtons value={score} onChange={setScore} />
@@ -168,7 +186,8 @@ function EpisodeDetailPopup({
   const deepDiveSession = episode.deepDiveChatId
     ? chatSessions.find(s => s.id === episode.deepDiveChatId) ?? null
     : null;
-  const scoreColor = episode.motivationScore > 0 ? 'text-blue-600' : episode.motivationScore < 0 ? 'text-red-500' : 'text-slate-400';
+  const sc2 = episode.motivationScore;
+  const scoreColor = sc2 === null ? 'text-slate-300' : sc2 > 0 ? 'text-blue-600' : sc2 < 0 ? 'text-red-500' : 'text-slate-400';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -192,7 +211,7 @@ function EpisodeDetailPopup({
             </div>
             <h3 className="text-sm font-black text-slate-800 leading-snug">{episode.title}</h3>
             <span className={cn('text-xs font-bold', scoreColor)}>
-              {episode.motivationScore > 0 ? '+' : ''}{episode.motivationScore}
+              {sc2 === null ? '―' : sc2 > 0 ? `+${sc2}` : sc2}
             </span>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 ml-3 flex-shrink-0 mt-0.5">
@@ -292,7 +311,8 @@ function EpisodeChip({
   onDelete: (id: string) => void;
 }) {
   const col = DISPLAY_COLS.find(c => c.key === colKey)!;
-  const scoreColor = episode.motivationScore > 0 ? 'text-blue-600' : episode.motivationScore < 0 ? 'text-red-500' : 'text-slate-400';
+  const sc = episode.motivationScore;
+  const scoreColor = sc === null ? 'text-slate-300' : sc > 0 ? 'text-blue-600' : sc < 0 ? 'text-red-500' : 'text-slate-400';
   return (
     <div
       className={cn('group relative rounded-lg border px-2 py-1.5 text-left w-full cursor-pointer', col.border, 'bg-white hover:shadow-sm hover:bg-slate-50/80 transition-all')}
@@ -314,7 +334,7 @@ function EpisodeChip({
       </div>
       <div className="flex items-center justify-between mt-1">
         <span className={cn('text-[9px] font-bold', scoreColor)}>
-          {episode.motivationScore > 0 ? '+' : ''}{episode.motivationScore}
+          {sc === null ? '―' : sc > 0 ? `+${sc}` : sc}
         </span>
         <button
           onClick={e => { e.stopPropagation(); onDeepDive(episode); }}

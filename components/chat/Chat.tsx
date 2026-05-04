@@ -37,12 +37,13 @@ function generateDeepDiveResponse(questionIdx: number): string {
 }
 
 function generateMockSummary(ep: ActiveEpisodeForDeepDive) {
-  const posNeg = ep.motivationScore > 0 ? '強い主体性と実行力' : '困難を乗り越える強さ';
+  const isPos = ep.motivationScore === null || ep.motivationScore >= 0;
+  const posNeg = isPos ? '強い主体性と実行力' : '困難を乗り越える強さ';
   return {
     aiConclusion: `「${ep.title}」の経験から、あなたの${posNeg}が見えてきます。`,
     aiDetail: `この出来事は${ep.period}時代の重要な転換点でした。当時の行動パターンや感情の動きは、現在のあなたの強みと価値観の根源となっています。チャットの回答から、あなたが困難な状況でも主体的に取り組む姿勢が一貫していることが確認できます。`,
-    extractedStrengths: ep.motivationScore > 0 ? ['実行力', '課題解決力'] : ['回復力', 'レジリエンス'],
-    extractedValues: ep.motivationScore > 0 ? ['成長', '挑戦'] : ['誠実さ', '忍耐'],
+    extractedStrengths: isPos ? ['実行力', '課題解決力'] : ['回復力', 'レジリエンス'],
+    extractedValues: isPos ? ['成長', '挑戦'] : ['誠実さ', '忍耐'],
   };
 }
 
@@ -300,7 +301,7 @@ function DeepDiveBanner({
   onComplete: () => void;
 }) {
   const canComplete = userMessageCount >= 2;
-  const scoreColor = ep.motivationScore >= 0 ? 'text-blue-600' : 'text-red-500';
+  const scoreColor = (ep.motivationScore ?? 0) >= 0 ? 'text-blue-600' : 'text-red-500';
   return (
     <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-blue-200 rounded-2xl p-3 mx-1 mt-1 flex-shrink-0">
       <div className="flex items-start gap-2">
@@ -312,7 +313,7 @@ function DeepDiveBanner({
           <p className="text-xs text-slate-700 truncate">
             <span className="font-medium">{ep.period}</span>：{ep.title}
             <span className={cn('ml-2 font-bold tabular-nums', scoreColor)}>
-              {ep.motivationScore > 0 ? '+' : ''}{ep.motivationScore}
+              {ep.motivationScore === null ? '―' : ep.motivationScore > 0 ? `+${ep.motivationScore}` : ep.motivationScore}
             </span>
           </p>
         </div>
