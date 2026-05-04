@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ChevronRight, TrendingUp, MapPin,
   Star, Zap, Calendar, Target,
@@ -11,7 +11,7 @@ import { storage } from '@/lib/storage';
 import { careerSectionStore } from '@/lib/careerSectionStore';
 import { cn } from '@/lib/utils';
 import type { TabId } from '@/components/layout/types';
-import type { LifePlanSpan } from '@/types';
+import type { LifePlanEntry, LifePlanSpan } from '@/types';
 
 interface Props {
   onTabChange?: (tab: TabId) => void;
@@ -107,7 +107,7 @@ const PHASE_LABELS: Record<Phase, string> = { now: 'NOW', near: '近期', mid: '
 
 // ── Life Timeline ────────────────────────────────────────────────
 
-function LifeTimeline({ span, currentAge, go }: { span: LifePlanSpan; currentAge: number; go: (t: TabId) => void }) {
+function LifeTimeline({ span, currentAge, entries, go }: { span: LifePlanSpan; currentAge: number; entries: LifePlanEntry[]; go: (t: TabId) => void }) {
   const ages = buildAges(span, currentAge);
   const currentYear = new Date().getFullYear();
 
@@ -182,10 +182,16 @@ function LifeTimeline({ span, currentAge, go }: { span: LifePlanSpan; currentAge
             {ages.map((age) => {
               const phase = getPhase(age, currentAge);
               const s = PHASE_STYLES[phase];
-              const ms = MILESTONES[age] ?? [];
+              // LifePlan エントリーのデータのみ表示（未入力なら空）
+              const entry = entries.find((e) => e.age === age);
+              const tags: string[] = [];
+              if (entry) {
+                if (entry.career.salary)   tags.push(entry.career.salary);
+                if (entry.career.position) tags.push(entry.career.position);
+              }
               return (
                 <div key={age} className="flex flex-col items-center gap-1" style={{ width: `${100 / ages.length}%` }}>
-                  {ms.slice(0, 2).map((m, i) => (
+                  {tags.slice(0, 2).map((m, i) => (
                     <span
                       key={i}
                       className={cn('text-[8px] font-semibold px-1.5 py-0.5 rounded-md leading-snug text-center w-full', s.tagBg, s.tagText)}
@@ -194,7 +200,7 @@ function LifeTimeline({ span, currentAge, go }: { span: LifePlanSpan; currentAge
                       {m}
                     </span>
                   ))}
-                  {ms.length === 0 && (
+                  {tags.length === 0 && (
                     <span className="text-[8px] text-slate-300 italic">—</span>
                   )}
                 </div>
@@ -220,17 +226,33 @@ export function Dashboard({ onTabChange }: Props) {
   const { profile, extendedProfile, favoriteCompanyIds } = useApp();
   const go = (tab: TabId) => onTabChange?.(tab);
 
-  const [span, setSpan] = useState<LifePlanSpan>('5年');
+  // ── クライアントのみで読む storage 系 state ─────────────────
+  // （SSRとクライアントで値が違うと hydration mismatch になるため useEffect で初期化）
+  const [span, setSpan]               = useState<LifePlanSpan>('5年');
+  const [planEntries, setPlanEntries] = useState<LifePlanEntry[]>([]);
+  const [goalTitle, setGoalTitle]     = useState('');
+  const [goalSubtitle, setGoalSubtitle] = useState('');
+  const [visionItems, setVisionItems] = useState(VISION_ITEMS);
 
-  // 年別ビジョンデータを読み込み（今年のものを使用）
   const thisYear = new Date().getFullYear();
-  const visionYears = storage.getVisionYears();
-  const thisYearData = visionYears[thisYear];
-  const visionItems = thisYearData?.items.length
-    ? thisYearData.items
-    : (storage.getVisionDreams().length > 0 ? storage.getVisionDreams() : VISION_ITEMS);
-  const goalTitle    = thisYearData?.goalTitle    ?? '昇華';
-  const goalSubtitle = thisYearData?.goalSubtitle ?? '成長・挑戦・豊かさの実現';
+
+  useEffect(() => {
+    // LifePlan
+    const savedPlan = storage.getLifePlan();
+    if (savedPlan?.span)    setSpan(savedPlan.span);
+    if (savedPlan?.entries) setPlanEntries(savedPlan.entries);
+
+    // Vision
+    const years = storage.getVisionYears();
+    const yd    = years[thisYear];
+    const items = yd?.items?.length
+      ? yd.items
+      : (storage.getVisionDreams().length > 0 ? storage.getVisionDreams() : VISION_ITEMS);
+    setGoalTitle(yd?.goalTitle ?? '昇華');
+    setGoalSubtitle(yd?.goalSubtitle ?? '成長・挑戦・豊かさの実現');
+    setVisionItems(items);
+  }, []);
+
   const achievedCount = visionItems.filter((it) => it.achieved).length;
   const goalProgress  = visionItems.length > 0 ? Math.round(achievedCount / visionItems.length * 100) : 0;
 
@@ -238,7 +260,7 @@ export function Dashboard({ onTabChange }: Props) {
   const firstName = profile.name ? profile.name.split(/[\s　]/)[0] : '田中';
 
   const recommendedJobs = [...mockCompanies].sort((a, b) => b.overallMatch - a.overallMatch).slice(0, 3);
-  const favoriteJobs = mockCompanies.filter((c) => favoriteCompanyIds.includes(c.id)).slice(0, 2);
+  const favoriteJobs = mockCompanies.filter((c) => favoriteCompanyIds.includes(c.id)).slice(0, 7);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-100">
@@ -247,12 +269,12 @@ export function Dashboard({ onTabChange }: Props) {
       <div className="flex-shrink-0 bg-white border-b border-slate-100 px-5 py-2.5">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-sm font-black text-slate-800">
+            <h1 className="text-sm font-black text-slate-800" suppressHydrationWarning>
               {getGreeting()}、{firstName}さん！
             </h1>
             <p className="text-[11px] text-slate-500">今日も理想の未来に向けて、一歩ずつ進みましょう。</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500" suppressHydrationWarning>
             <Calendar size={12} className="text-slate-400" />
             {getDateStr()}
           </div>
@@ -263,7 +285,7 @@ export function Dashboard({ onTabChange }: Props) {
       <div className="flex-1 min-h-0 flex gap-2.5 p-2.5 overflow-hidden">
 
         {/* ── Left column ──────────────────────────────────── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-2.5 overflow-hidden">
+        <div className="flex-[3] min-w-0 flex flex-col gap-2.5 overflow-hidden">
 
           {/* ① 今年の目標 */}
           <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-100 px-4 py-3">
@@ -358,7 +380,12 @@ export function Dashboard({ onTabChange }: Props) {
                 {SPAN_OPTIONS.map(({ key, label }) => (
                   <button
                     key={key}
-                    onClick={() => setSpan(key)}
+                    onClick={() => {
+                      setSpan(key);
+                      const current = storage.getLifePlan();
+                      if (current) storage.setLifePlan({ ...current, span: key });
+                      else storage.setLifePlan({ birthYear: new Date().getFullYear() - currentAge, span: key, entries: [] });
+                    }}
                     className={cn(
                       'text-[9px] px-2 py-0.5 rounded-full font-semibold transition-colors',
                       span === key ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
@@ -369,12 +396,12 @@ export function Dashboard({ onTabChange }: Props) {
                 ))}
               </div>
             </div>
-            <LifeTimeline span={span} currentAge={currentAge} go={go} />
+            <LifeTimeline span={span} currentAge={currentAge} entries={planEntries} go={go} />
           </div>
         </div>
 
         {/* ── Right column ──────────────────────────────────── */}
-        <div className="w-60 flex-shrink-0 flex flex-col gap-2.5 overflow-hidden">
+        <div className="flex-[2] min-w-0 flex flex-col gap-2.5 overflow-hidden">
 
           {/* ④ 市場価値 */}
           <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-100 px-3 py-3">
