@@ -492,7 +492,6 @@ export function Dashboard({ onTabChange }: Props) {
                     <Star size={10} className="text-amber-400" fill="currentColor" />
                     <p className="text-[9px] font-bold text-slate-600">お気に入り求人</p>
                   </div>
-                  <button onClick={() => go('companies')} className="text-[9px] text-blue-500 hover:underline">管理する</button>
                 </div>
                 {favoriteJobs.length === 0 ? (
                   <div className="px-1 py-1.5">

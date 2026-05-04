@@ -217,7 +217,7 @@ function TableCell({
   }).filter(ep => !ep.category || ep.category === category);
 
   return (
-    <td className={cn('border border-slate-200 align-top p-1.5', col.bg)} style={{ verticalAlign: 'top', width: '120px', maxWidth: '120px' }}>
+    <td className={cn('border border-slate-200 align-top p-1.5', col.bg)} style={{ verticalAlign: 'top' }}>
       <div className="flex flex-col gap-1 min-h-[64px]">
         {filtered.map(ep => (
           <EpisodeChip key={ep.id} episode={ep} colKey={col.key}
@@ -293,7 +293,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
     onTabChange('chat');
   };
 
-  // 年齢列96px + 8列×120px = 1056px
+  // 年齢列96px + 8列×120px = 最小1056px（画面幅に応じて広がる）
   const SHARED_MIN_WIDTH = 1056;
 
   return (
@@ -302,7 +302,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
 
         {/* Shared scroll wrapper — graph + table aligned */}
         <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
-          <div style={{ width: `${SHARED_MIN_WIDTH}px` }} className="space-y-0">
+          <div style={{ minWidth: `${SHARED_MIN_WIDTH}px`, width: '100%' }} className="space-y-0">
 
             {/* Motivation chart card */}
             <div className="bg-white rounded-t-2xl border border-slate-100 shadow-sm pt-3 pb-1">
@@ -330,7 +330,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
 
             {/* Timeline table — no own overflow-x-auto */}
             <div className="bg-white rounded-b-2xl border border-x border-b border-slate-100 shadow-sm overflow-hidden">
-            <table className="w-full border-collapse" style={{ tableLayout: 'fixed', width: `${SHARED_MIN_WIDTH}px` }}>
+            <table className="w-full border-collapse" style={{ tableLayout: 'fixed', width: '100%', minWidth: `${SHARED_MIN_WIDTH}px` }}>
               <thead>
                 <tr>
                   {/* Row label header */}
@@ -338,7 +338,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
                     <span className="text-xs font-semibold text-slate-500">年齢</span>
                   </th>
                   {DISPLAY_COLS.map(col => (
-                    <th key={col.key} className={cn('border border-slate-200 px-2 py-2 text-center', col.headerBg)} style={{ width: '120px' }}>
+                    <th key={col.key} className={cn('border border-slate-200 px-2 py-2 text-center', col.headerBg)}>
                       <p className={cn('text-[10px] font-bold', col.color)}>{col.ageRange}</p>
                       <p className={cn('text-xs font-bold mt-0.5', col.color)}>{col.label}</p>
                     </th>
