@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X, Briefcase, User, HelpCircle, Pencil } from 'lucide-react';
+import { Plus, X, Briefcase, User, HelpCircle, Pencil, MessageSquare } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { generateId } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MotivationChart } from './MotivationChart';
 import { EpisodeCard } from './EpisodeCard';
-import type { Episode, EpisodePeriod, EpisodeCategory } from '@/types';
+import type { Episode, EpisodePeriod, EpisodeCategory, ChatSession } from '@/types';
 import type { TabId } from '@/components/layout/types';
 
 // ── Display columns ───────────────────────────────────────────────
@@ -149,13 +149,144 @@ function EpisodeModal({
   );
 }
 
-// ── Mini episode chip ─────────────────────────────────────────────
+// ── Episode Detail Popup ──────────────────────────────────────────
 
-function EpisodeChip({
-  episode, colKey, onEdit, onDeepDive, onDelete,
+function EpisodeDetailPopup({
+  episode,
+  colKey,
+  chatSessions,
+  onClose,
+  onDeepDive,
 }: {
   episode: Episode;
   colKey: string;
+  chatSessions: ChatSession[];
+  onClose: () => void;
+  onDeepDive: (ep: Episode) => void;
+}) {
+  const col = DISPLAY_COLS.find(c => c.key === colKey) ?? DISPLAY_COLS[0];
+  const deepDiveSession = episode.deepDiveChatId
+    ? chatSessions.find(s => s.id === episode.deepDiveChatId) ?? null
+    : null;
+  const scoreColor = episode.motivationScore > 0 ? 'text-blue-600' : episode.motivationScore < 0 ? 'text-red-500' : 'text-slate-400';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[82vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className={cn('flex items-start justify-between px-5 pt-5 pb-4 border-b border-slate-100 rounded-t-2xl', col.headerBg)}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+              <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white/70', col.color, col.border)}>
+                {col.ageRange}　{col.label}
+              </span>
+              {episode.isDeepDived && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">
+                  深掘り済み ✓
+                </span>
+              )}
+            </div>
+            <h3 className="text-sm font-black text-slate-800 leading-snug">{episode.title}</h3>
+            <span className={cn('text-xs font-bold', scoreColor)}>
+              {episode.motivationScore > 0 ? '+' : ''}{episode.motivationScore}
+            </span>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 ml-3 flex-shrink-0 mt-0.5">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+
+          {/* AI要約 */}
+          {episode.aiConclusion && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+              <p className="text-[10px] font-bold text-emerald-700 mb-1.5 flex items-center gap-1">
+                ✨ AI深掘り要約
+              </p>
+              <p className="text-xs text-slate-700 leading-relaxed">{episode.aiConclusion}</p>
+            </div>
+          )}
+
+          {/* 抽出された強み・価値観 */}
+          {((episode.extractedStrengths?.length ?? 0) > 0 || (episode.extractedValues?.length ?? 0) > 0) && (
+            <div className="grid grid-cols-2 gap-2">
+              {(episode.extractedStrengths?.length ?? 0) > 0 && (
+                <div className="bg-blue-50 rounded-xl p-3">
+                  <p className="text-[9px] font-bold text-blue-600 mb-1.5">💪 強み</p>
+                  <div className="flex flex-wrap gap-1">
+                    {episode.extractedStrengths!.map((s, i) => (
+                      <span key={i} className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(episode.extractedValues?.length ?? 0) > 0 && (
+                <div className="bg-violet-50 rounded-xl p-3">
+                  <p className="text-[9px] font-bold text-violet-600 mb-1.5">💠 価値観</p>
+                  <div className="flex flex-wrap gap-1">
+                    {episode.extractedValues!.map((v, i) => (
+                      <span key={i} className="text-[9px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">{v}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 深掘りチャット */}
+          {deepDiveSession && deepDiveSession.messages.length > 0 ? (
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 mb-2 flex items-center gap-1">
+                <MessageSquare size={10} /> 深掘りのやり取り（{deepDiveSession.messages.length}件）
+              </p>
+              <div className="space-y-2">
+                {deepDiveSession.messages.map(msg => (
+                  <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                    <div className={cn(
+                      'max-w-[85%] px-3 py-2 rounded-xl text-[11px] leading-relaxed whitespace-pre-wrap',
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white rounded-br-none'
+                        : 'bg-slate-100 text-slate-700 rounded-bl-none'
+                    )}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : !episode.isDeepDived ? (
+            <div className="text-center py-6">
+              <p className="text-xs text-slate-400 mb-3">まだ深掘りされていません。</p>
+              <button
+                onClick={() => { onDeepDive(episode); onClose(); }}
+                className="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                深掘りを始める →
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 text-center py-4">やり取りの記録が見つかりません</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Mini episode chip ─────────────────────────────────────────────
+
+function EpisodeChip({
+  episode, colKey, onView, onEdit, onDeepDive, onDelete,
+}: {
+  episode: Episode;
+  colKey: string;
+  onView: () => void;
   onEdit: () => void;
   onDeepDive: (ep: Episode) => void;
   onDelete: (id: string) => void;
@@ -163,7 +294,10 @@ function EpisodeChip({
   const col = DISPLAY_COLS.find(c => c.key === colKey)!;
   const scoreColor = episode.motivationScore > 0 ? 'text-blue-600' : episode.motivationScore < 0 ? 'text-red-500' : 'text-slate-400';
   return (
-    <div className={cn('group relative rounded-lg border px-2 py-1.5 text-left w-full', col.border, 'bg-white hover:shadow-sm transition-shadow')}>
+    <div
+      className={cn('group relative rounded-lg border px-2 py-1.5 text-left w-full cursor-pointer', col.border, 'bg-white hover:shadow-sm hover:bg-slate-50/80 transition-all')}
+      onClick={onView}
+    >
       <div className="flex items-start justify-between gap-1">
         <p className="text-[10px] font-semibold text-slate-700 leading-tight flex-1 truncate">{episode.title}</p>
         {/* Edit + Delete buttons (visible on hover) */}
@@ -182,8 +316,10 @@ function EpisodeChip({
         <span className={cn('text-[9px] font-bold', scoreColor)}>
           {episode.motivationScore > 0 ? '+' : ''}{episode.motivationScore}
         </span>
-        <button onClick={() => onDeepDive(episode)}
-          className={cn('text-[9px] font-medium hover:underline', col.color)}>
+        <button
+          onClick={e => { e.stopPropagation(); onDeepDive(episode); }}
+          className={cn('text-[9px] font-medium hover:underline', col.color)}
+        >
           深掘り →
         </button>
       </div>
@@ -197,12 +333,13 @@ function EpisodeChip({
 // ── Table cell ────────────────────────────────────────────────────
 
 function TableCell({
-  col, category, episodes, onAdd, onEdit, onDeepDive, onDelete,
+  col, category, episodes, onAdd, onView, onEdit, onDeepDive, onDelete,
 }: {
   col: typeof DISPLAY_COLS[0];
   category: EpisodeCategory;
   episodes: Episode[];
   onAdd: () => void;
+  onView: (ep: Episode, colKey: string) => void;
   onEdit: (ep: Episode) => void;
   onDeepDive: (ep: Episode) => void;
   onDelete: (id: string) => void;
@@ -221,6 +358,7 @@ function TableCell({
       <div className="flex flex-col gap-1 min-h-[64px]">
         {filtered.map(ep => (
           <EpisodeChip key={ep.id} episode={ep} colKey={col.key}
+            onView={() => onView(ep, col.key)}
             onEdit={() => onEdit(ep)} onDeepDive={onDeepDive} onDelete={onDelete} />
         ))}
         <button
@@ -247,6 +385,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
   const [selectedColKey, setSelectedColKey] = useState<string | null>(null);
   const [addModal, setAddModal] = useState<{ colKey: string; period: EpisodePeriod; category: EpisodeCategory } | null>(null);
   const [editModal, setEditModal] = useState<{ episode: Episode; colKey: string } | null>(null);
+  const [viewPopup, setViewPopup] = useState<{ episode: Episode; colKey: string } | null>(null);
 
   const handleAdd = (data: Omit<Episode, 'id' | 'createdAt' | 'updatedAt' | 'isDeepDived'>) => {
     const now = new Date().toISOString();
@@ -363,6 +502,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
                       category="school"
                       episodes={episodes}
                       onAdd={() => setAddModal({ colKey: col.key, period: col.period, category: 'school' })}
+                      onView={(ep, colKey) => setViewPopup({ episode: ep, colKey })}
                       onEdit={(ep) => setEditModal({ episode: ep, colKey: getColKey(ep) })}
                       onDeepDive={handleDeepDive}
                       onDelete={handleDelete}
@@ -387,6 +527,7 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
                       category="private"
                       episodes={episodes}
                       onAdd={() => setAddModal({ colKey: col.key, period: col.period, category: 'private' })}
+                      onView={(ep, colKey) => setViewPopup({ episode: ep, colKey })}
                       onEdit={(ep) => setEditModal({ episode: ep, colKey: getColKey(ep) })}
                       onDeepDive={handleDeepDive}
                       onDelete={handleDelete}
@@ -431,6 +572,17 @@ export function LifeHistoryTab({ onTabChange, highlightedEpisodeId, onClearHighl
           category={addModal.category}
           onSubmit={handleAdd}
           onClose={() => setAddModal(null)}
+        />
+      )}
+
+      {/* Episode detail popup */}
+      {viewPopup && (
+        <EpisodeDetailPopup
+          episode={viewPopup.episode}
+          colKey={viewPopup.colKey}
+          chatSessions={chatSessions}
+          onClose={() => setViewPopup(null)}
+          onDeepDive={handleDeepDive}
         />
       )}
 
