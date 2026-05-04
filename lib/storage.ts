@@ -1,4 +1,4 @@
-import type { UserProfile, LifeEvent, ChatMessage, ChatSession, CareerPlan, ExtendedProfile, ApplicationDocument, Episode, ActiveEpisodeForDeepDive, MatchCriterionKey, CompanyViewHistoryItem, SelectedCompanyInfo, SelectedJobInfo, InterviewDocument, CommonInterviewPrep, CompanyInterviewPrep, InterviewPracticeMode, LifePlan, LifeTask, LifeVision } from '@/types';
+import type { UserProfile, LifeEvent, ChatMessage, ChatSession, CareerPlan, ExtendedProfile, ApplicationDocument, Episode, ActiveEpisodeForDeepDive, MatchCriterionKey, CompanyViewHistoryItem, SelectedCompanyInfo, SelectedJobInfo, InterviewDocument, CommonInterviewPrep, CompanyInterviewPrep, InterviewPracticeMode, LifePlan, LifeTask, LifeVision, VisionDreamItem, YearlyVisionData } from '@/types';
 
 const KEYS = {
   profile: 'career_profile',
@@ -23,6 +23,8 @@ const KEYS = {
   lifePlan: 'career_life_plan',
   lifeTasks: 'career_life_tasks',
   lifeVision: 'career_life_vision',
+  visionDreams: 'career_vision_dreams',
+  visionYears: 'career_vision_years',
 } as const;
 
 function safeGet<T>(key: string, fallback: T): T {
@@ -112,4 +114,10 @@ export const storage = {
 
   getLifeVision: (): LifeVision | null => safeGet<LifeVision | null>(KEYS.lifeVision, null),
   setLifeVision: (v: LifeVision) => safeSet(KEYS.lifeVision, v),
+
+  getVisionDreams: (): VisionDreamItem[] => safeGet<VisionDreamItem[]>(KEYS.visionDreams, []),
+  setVisionDreams: (items: VisionDreamItem[]) => safeSet(KEYS.visionDreams, items),
+
+  getVisionYears: (): Record<number, YearlyVisionData> => safeGet<Record<number, YearlyVisionData>>(KEYS.visionYears, {}),
+  setVisionYears: (data: Record<number, YearlyVisionData>) => safeSet(KEYS.visionYears, data),
 };

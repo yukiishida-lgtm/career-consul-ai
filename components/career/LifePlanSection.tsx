@@ -9,6 +9,8 @@ import type { LifePlan, LifePlanEntry, LifePlanSpan } from '@/types';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
+const MAX_AGE = 60;
+
 function calcAge(birthDate: string): number {
   if (!birthDate) return 30;
   const birth = new Date(birthDate);
@@ -16,11 +18,24 @@ function calcAge(birthDate: string): number {
   let age = now.getFullYear() - birth.getFullYear();
   const m = now.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
-  return Math.max(18, age);
+  return Math.max(18, Math.min(age, MAX_AGE));
 }
 
-function spanToStep(span: LifePlanSpan): number {
-  return span === '1年' ? 1 : span === '5年' ? 5 : 10;
+function buildAgeList(currentAge: number, span: LifePlanSpan): number[] {
+  const start = Math.min(currentAge, MAX_AGE);
+
+  if (span === '1年') {
+    const ages: number[] = [];
+    for (let a = start; a <= MAX_AGE; a++) ages.push(a);
+    return ages;
+  }
+
+  const step = span === '5年' ? 5 : 10;
+  // First = current age, then snap up to next clean multiple of step
+  const nextRounded = Math.ceil((start + 1) / step) * step;
+  const ages: number[] = [start];
+  for (let a = nextRounded; a <= MAX_AGE; a += step) ages.push(a);
+  return ages;
 }
 
 function generateEntries(
@@ -29,18 +44,10 @@ function generateEntries(
   span: LifePlanSpan,
   existing: LifePlanEntry[]
 ): LifePlanEntry[] {
-  const step = spanToStep(span);
-  const entries: LifePlanEntry[] = [];
-  for (let age = currentAge; age <= 70; age += step) {
+  return buildAgeList(currentAge, span).map((age) => {
     const found = existing.find((e) => e.age === age);
-    entries.push(found ?? {
-      age,
-      year: birthYear + age,
-      career: {},
-      private: {},
-    });
-  }
-  return entries;
+    return found ?? { age, year: birthYear + age, career: {}, private: {} };
+  });
 }
 
 const CAREER_FIELDS: { key: keyof LifePlanEntry['career']; label: string; placeholder: string }[] = [
@@ -146,7 +153,7 @@ export function LifePlanSection() {
           ))}
         </div>
         <span className="text-xs text-slate-400 ml-auto">
-          {currentAge}歳〜70歳 / {entries.length}ステップ
+          {currentAge}歳〜{MAX_AGE}歳 / {entries.length}ステップ
         </span>
       </div>
 

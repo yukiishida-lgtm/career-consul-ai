@@ -279,10 +279,12 @@ export interface ApplicationDocument {
 }
 
 export type EpisodePeriod = '幼少期' | '小学生' | '中学生' | '高校生' | '大学生' | '社会人';
+export type EpisodeCategory = 'school' | 'private';
 
 export interface Episode {
   id: string;
   period: EpisodePeriod;
+  category?: EpisodeCategory;
   age?: number;
   title: string;
   motivationScore: number; // -100 to 100
@@ -416,4 +418,22 @@ export interface VisionCell {
 export interface LifeVision {
   yearTheme: string;
   cells: VisionCell[];
+}
+
+export interface VisionDreamItem {
+  id: string;
+  title: string;
+  desc: string;
+  achieved: boolean;
+  g: string;
+  emoji: string;
+  img: string;
+}
+
+export interface YearlyVisionData {
+  year: number;
+  goalTitle: string;      // 例: 昇華
+  goalSubtitle: string;   // 例: 成長・挑戦・豊かさの実現
+  goalProgress: number;   // 0〜100
+  items: VisionDreamItem[];
 }

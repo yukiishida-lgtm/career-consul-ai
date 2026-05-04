@@ -8,6 +8,7 @@ import {
 import { useApp } from '@/context/AppContext';
 import { mockCompanies } from '@/lib/mockCompanies';
 import { storage } from '@/lib/storage';
+import { careerSectionStore } from '@/lib/careerSectionStore';
 import { cn } from '@/lib/utils';
 import type { TabId } from '@/components/layout/types';
 import type { LifePlanSpan } from '@/types';
@@ -221,6 +222,18 @@ export function Dashboard({ onTabChange }: Props) {
 
   const [span, setSpan] = useState<LifePlanSpan>('5年');
 
+  // 年別ビジョンデータを読み込み（今年のものを使用）
+  const thisYear = new Date().getFullYear();
+  const visionYears = storage.getVisionYears();
+  const thisYearData = visionYears[thisYear];
+  const visionItems = thisYearData?.items.length
+    ? thisYearData.items
+    : (storage.getVisionDreams().length > 0 ? storage.getVisionDreams() : VISION_ITEMS);
+  const goalTitle    = thisYearData?.goalTitle    ?? '昇華';
+  const goalSubtitle = thisYearData?.goalSubtitle ?? '成長・挑戦・豊かさの実現';
+  const achievedCount = visionItems.filter((it) => it.achieved).length;
+  const goalProgress  = visionItems.length > 0 ? Math.round(achievedCount / visionItems.length * 100) : 0;
+
   const currentAge = calcAge(extendedProfile.birthDate);
   const firstName = profile.name ? profile.name.split(/[\s　]/)[0] : '田中';
 
@@ -262,22 +275,22 @@ export function Dashboard({ onTabChange }: Props) {
               {/* Divider */}
               <div className="w-px h-4 bg-slate-200 flex-shrink-0 mx-1" />
               {/* Theme */}
-              <p className="text-base font-black text-slate-800 leading-none flex-shrink-0">昇華</p>
-              <p className="text-[10px] text-slate-400 flex-shrink-0">成長・挑戦・豊かさの実現</p>
+              <p className="text-base font-black text-slate-800 leading-none flex-shrink-0">{goalTitle}</p>
+              <p className="text-[10px] text-slate-400 flex-shrink-0">{goalSubtitle}</p>
               {/* Spacer */}
               <div className="flex-1" />
               {/* Progress */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-slate-400">進捗率</span>
-                  <span className="text-sm font-black text-blue-600">65%</span>
+                  <span className="text-[9px] text-slate-400">達成率</span>
+                  <span className="text-sm font-black text-blue-600">{goalProgress}%</span>
                 </div>
                 <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '65%' }} />
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${goalProgress}%` }} />
                 </div>
               </div>
               {/* Link */}
-              <button onClick={() => go('career')} className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5 flex-shrink-0 ml-2">
+              <button onClick={() => { careerSectionStore.set('lifeDream'); go('career'); }} className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5 flex-shrink-0 ml-2">
                 編集 <ChevronRight size={8} />
               </button>
             </div>
@@ -290,12 +303,15 @@ export function Dashboard({ onTabChange }: Props) {
                 <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">2</span>
                 <span className="text-[11px] font-bold text-slate-700">夢の見える化（8つのビジョン）</span>
               </div>
-              <button onClick={() => go('career')} className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5">
+              <button
+                onClick={() => { careerSectionStore.set('lifeDream'); go('career'); }}
+                className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5"
+              >
                 ビジョンを編集する <ChevronRight size={9} />
               </button>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {VISION_ITEMS.map((item) => (
+              {visionItems.map((item) => (
                 <div
                   key={item.id}
                   className="relative rounded-xl overflow-hidden flex-shrink-0 group"
