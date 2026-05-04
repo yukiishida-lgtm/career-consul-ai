@@ -11,9 +11,9 @@ export const PERIOD_META: Record<EpisodePeriod, {
   '幼少期':  { color: '#ec4899', bg: 'bg-pink-50',    bandFill: '#fce7f3', label: '幼少期', ageRange: '0〜6歳'   },
   '小学生':  { color: '#3b82f6', bg: 'bg-blue-50',    bandFill: '#dbeafe', label: '小学生', ageRange: '7〜12歳'  },
   '中学生':  { color: '#0d9488', bg: 'bg-teal-50',    bandFill: '#ccfbf1', label: '中学生', ageRange: '13〜15歳' },
-  '高校生':  { color: '#8b5cf6', bg: 'bg-violet-50',  bandFill: '#ede9fe', label: '高校生', ageRange: '16〜18歳' },
-  '大学生':  { color: '#f59e0b', bg: 'bg-amber-50',   bandFill: '#fef3c7', label: '大学生', ageRange: '19〜22歳' },
-  '社会人':  { color: '#10b981', bg: 'bg-emerald-50', bandFill: '#d1fae5', label: '社会人', ageRange: '23歳〜'   },
+  '高校生':  { color: '#f59e0b', bg: 'bg-amber-50',   bandFill: '#fef3c7', label: '高校生', ageRange: '16〜18歳' },
+  '大学生':  { color: '#8b5cf6', bg: 'bg-violet-50',  bandFill: '#ede9fe', label: '大学生', ageRange: '19〜22歳' },
+  '社会人':  { color: '#64748b', bg: 'bg-slate-50',   bandFill: '#f1f5f9', label: '社会人', ageRange: '23歳〜'   },
 };
 
 // ── 8 display columns (matches the table exactly) ─────────────────
@@ -50,29 +50,29 @@ const CHART_COLS = [
   {
     key: '高校生',
     label: '高校生',
-    color: '#8b5cf6',
-    bandFill: '#ede9fe',
+    color: '#f59e0b',
+    bandFill: '#fef3c7',
     filter: (ep: Episode) => ep.period === '高校生',
   },
   {
     key: '大学生',
     label: '大学生',
-    color: '#f59e0b',
-    bandFill: '#fef3c7',
+    color: '#8b5cf6',
+    bandFill: '#ede9fe',
     filter: (ep: Episode) => ep.period === '大学生',
   },
   {
     key: '社会人①',
     label: '社会人①',
-    color: '#10b981',
-    bandFill: '#d1fae5',
+    color: '#64748b',
+    bandFill: '#f1f5f9',
     filter: (ep: Episode) => ep.period === '社会人' && (!ep.age || ep.age <= 26),
   },
   {
     key: '社会人②',
     label: '社会人②',
-    color: '#059669',
-    bandFill: '#a7f3d0',
+    color: '#475569',
+    bandFill: '#e2e8f0',
     filter: (ep: Episode) => ep.period === '社会人' && ep.age !== undefined && ep.age >= 27,
   },
 ] as const;

@@ -26,10 +26,10 @@ const DISPLAY_COLS: {
   { key: '小学生低学年', period: '小学生', label: '小学生低学年', ageRange: '7歳〜9歳',   color: 'text-blue-600',   bg: 'bg-blue-50/60',   headerBg: 'bg-blue-50',   border: 'border-blue-200' },
   { key: '小学生高学年', period: '小学生', label: '小学生高学年', ageRange: '10歳〜12歳', color: 'text-blue-500',   bg: 'bg-blue-50/40',   headerBg: 'bg-sky-50',    border: 'border-sky-200'  },
   { key: '中学生',       period: '中学生', label: '中学生',       ageRange: '13歳〜15歳', color: 'text-teal-600',   bg: 'bg-teal-50/60',   headerBg: 'bg-teal-50',   border: 'border-teal-200' },
-  { key: '高校生',       period: '高校生', label: '高校生',       ageRange: '16歳〜18歳', color: 'text-violet-600', bg: 'bg-violet-50/60', headerBg: 'bg-violet-50', border: 'border-violet-200' },
-  { key: '大学生',       period: '大学生', label: '大学生',       ageRange: '19歳〜22歳', color: 'text-amber-600',  bg: 'bg-amber-50/60',  headerBg: 'bg-amber-50',  border: 'border-amber-200' },
-  { key: '社会人①',      period: '社会人', label: '社会人',       ageRange: '23歳〜26歳', color: 'text-emerald-600',bg: 'bg-emerald-50/60',headerBg: 'bg-emerald-50',border: 'border-emerald-200' },
-  { key: '社会人②',      period: '社会人', label: '社会人',       ageRange: '27歳〜30歳', color: 'text-emerald-700',bg: 'bg-emerald-50/40',headerBg: 'bg-green-50',  border: 'border-green-200'   },
+  { key: '高校生',       period: '高校生', label: '高校生',       ageRange: '16歳〜18歳', color: 'text-amber-600',  bg: 'bg-amber-50/60',  headerBg: 'bg-amber-50',  border: 'border-amber-200'  },
+  { key: '大学生',       period: '大学生', label: '大学生',       ageRange: '19歳〜22歳', color: 'text-violet-600', bg: 'bg-violet-50/60', headerBg: 'bg-violet-50', border: 'border-violet-200' },
+  { key: '社会人①',      period: '社会人', label: '社会人',       ageRange: '23歳〜26歳', color: 'text-slate-600',  bg: 'bg-slate-100/60', headerBg: 'bg-slate-100', border: 'border-slate-300'  },
+  { key: '社会人②',      period: '社会人', label: '社会人',       ageRange: '27歳〜30歳', color: 'text-slate-600',  bg: 'bg-slate-100/40', headerBg: 'bg-slate-50',  border: 'border-slate-200'  },
 ];
 
 // ── Motivation score buttons ──────────────────────────────────────
